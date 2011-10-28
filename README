@@ -1,0 +1,3 @@
+Front-End Rear
+
+A sample backend scraper using front-end stuff (PhantomJS + jQuery + Python) to scrap content from http://mangastream.com's latest releases.

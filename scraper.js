@@ -9,66 +9,30 @@ if (phantom.args.length != 1) {
     phantom.exit();
 } else {
     address = phantom.args[0];
-    var paging = [], chapter_images = [], subpages = {}, ci_url;
 
-    console.log("fetching pagers...");
-    (function(callback) {
-        page.open(address, function (status) {
-            console.log("opened...");
-            if (status !== 'success') {
-                console.log('Unable to load the address!');
-            } else {
-                if (page.injectJs("jquery.min.js")) {
-                    console.log("jQuery loaded...");
-                }
-                paging = page.evaluate(function () {
-                    var pager_urls = [], paging = $("#controls a"), l;
-                    for (var i=0; i<paging.length; i++) {
-                        l = paging[i].getAttribute("href");
-                        if (!isNaN(parseInt(paging[i].innerHTML))) {
-                            pager_urls.push(l);
-                        }
-                    }
-                    return pager_urls;
-                });
-                callback();
+    page.open(address, function (status) {
+        if (status !== 'success') {
+            console.log('Unable to load the address!');
+        } else {
+
+            // inject jquery to make sure we can use its power!
+            if (page.injectJs("jquery.min.js")) {
+                console.log("jQuery loaded...");
             }
-        });
-    })(fetchChapterImages);
 
-    function fetchChapterImage(index, url) {
-        console.log("Opening: " + url);
-        (function() {
-            page.open(url, function (status) {
-                if (status !== 'success') {
-                    console.log('Unable to load chapter image: ' + (index + 1) + ' Status: ' + status);
-                } else {
-                    if (page.injectJs("jquery.min.js")) {
-                        console.log("jQuery loaded...");
-                    }
-
-                    var chapter_img = page.evaluate(function () {
-                        var $ = jQuery.noConflict();
-                        return $("img#p").getAttribute("src");
-                    });
-                    console.log("got: " + chapter_img);
-                    chapter_images.push(chapter_img);
+            // run our js code inside the headless browser
+            var latest_release = page.evaluate(function () {
+                var links = $("ul.freshmanga a");
+                var releases = {};
+                for (var i=0; i<links.length; i++) {
+                    releases[links[i].innerHTML] = links[i].getAttribute("href");
                 }
+                return JSON.stringify(releases);
             });
-        })();
-    }
+            console.log(latest_release);
+            phantom.exit();
 
-    function fetchChapterImages() {
-        if (paging.length > 0) {
-            console.log("fetching chapter images...");
-            var base_url = address.substring(0, address.indexOf(paging[0]));
-            for (var i=0; i<1; i++) {
-                ci_url = base_url + paging[i];
-                fetchChapterImage(i, ci_url);
-            }
         }
-        console.log(chapter_images);
-        phantom.exit();
-    }
+    });
 
 }
